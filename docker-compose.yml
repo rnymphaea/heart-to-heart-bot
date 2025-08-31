@@ -1,0 +1,15 @@
+services:
+  bot:
+    build: .
+    container_name: h2h-bot
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    secrets:
+      - bot_token
+
+secrets:
+  bot_token:
+    file: ./secrets/bot_token

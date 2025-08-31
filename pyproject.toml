@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "heart-to-heart-bot"
+version = "0.1.0"
+description = "💬 Couple’s Q&A game - answer, share, and get closer."
+authors = ["Lvov Alexandr <strangeisdoctor@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+aiogram = "^3.22.0"
+logging = "^0.4.9.6"
+pydantic-settings = "^2.10.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
