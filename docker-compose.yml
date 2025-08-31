@@ -3,13 +3,41 @@ services:
     build: .
     container_name: h2h-bot
     restart: unless-stopped
-
     env_file:
       - .env
-
     secrets:
       - bot_token
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: h2h-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+      POSTGRES_PASSWORD_FILE: ${POSTGRES_PASSWORD_FILE}
+    secrets:
+      - postgres_password
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 secrets:
   bot_token:
     file: ./secrets/bot_token
+  postgres_password:
+    file: ./secrets/postgres_password
+
+volumes:
+  postgres_data:
