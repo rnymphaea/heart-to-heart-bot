@@ -1,4 +1,3 @@
-# Этап 1: установка зависимостей
 FROM python:3.11-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -18,10 +17,8 @@ FROM python:3.11-slim
 WORKDIR /app
 
 COPY --from=builder /app/.venv ./.venv
-
 ENV PATH="/app/.venv/bin:$PATH"
 
-COPY src ./src
+COPY . .
 
-CMD ["python", "-m", "src.bot.main"]
-
+CMD ["sh", "-c", "alembic upgrade head && python -m src.bot.main"]

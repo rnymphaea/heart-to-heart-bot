@@ -11,6 +11,8 @@ aiogram = "^3.22.0"
 logging = "^0.4.9.6"
 pydantic-settings = "^2.10.1"
 sqlalchemy = "^2.0.43"
+alembic = "^1.16.5"
+psycopg2-binary = "^2.9.10"
 
 
 [build-system]
