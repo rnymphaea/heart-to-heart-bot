@@ -6,3 +6,9 @@ def start_keyboard():
         [InlineKeyboardButton(text="Присоединиться", callback_data="join_couple")],
     ])
     return keyboard
+
+def cancel_keyboard():
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Отмена", callback_data="cancel")]
+    ])
+    return keyboard
