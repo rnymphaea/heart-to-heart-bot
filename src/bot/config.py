@@ -26,6 +26,15 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
+        url = self._database_url(engine="asyncpg")
+        return url
+    
+    @property
+    def database_migrate_url(self) -> str:
+        url = self._database_url(engine="psycopg2")
+        return url
+    
+    def _database_url(self, engine: str) -> str:
         pg_pass_path = Path(self.postgres_password_file)
         if not pg_pass_path.exists():
             raise FileNotFoundError(f"Postgres password file not found: {pg_pass_path}")
@@ -33,7 +42,11 @@ class Settings(BaseSettings):
         password = pg_pass_path.read_text().strip()
 
         return (
-            f"postgresql+psycopg2://{self.postgres_user}:"
+            f"postgresql+{engine}://{self.postgres_user}:"
             f"{password}@{self.postgres_host}:"
             f"{self.postgres_port}/{self.postgres_db_name}"
         )
+
+
+
+settings = Settings()
