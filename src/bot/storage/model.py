@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, text
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship, declarative_base
 
@@ -9,6 +9,7 @@ class Couple(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     token = Column(String(32), unique=True, nullable=False)
+    is_active = Column(Boolean, default=False, nullable=False, server_default=text("false"))
     created_at = Column(DateTime, server_default=func.now())
 
     users = relationship("User", back_populates="couple")
