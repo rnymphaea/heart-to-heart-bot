@@ -47,6 +47,8 @@ async def leave_couple(session: AsyncSession, telegram_id: int) -> None:
 
     if not couple.is_active:
         await session.delete(couple)
+    else:
+        couple.is_active = False
 
     await session.commit()
 
@@ -65,19 +67,25 @@ async def user_in_couple(session: AsyncSession, telegram_id: int) -> None | str:
     return None
 
 
-async def join_couple(session: AsyncSession, telegram_id: int, token: str) -> Couple:
+async def join_couple(session: AsyncSession, telegram_id: int, token: str) -> (Couple, int):
     existing_user = await user_in_couple(session, telegram_id)
     if existing_user:
         raise ValueError("вы уже состоите в паре")
 
     couple = await session.scalar(
-        select(Couple).where(Couple.token == token)
+        select(Couple)
+        .options(selectinload(Couple.users))
+        .where(Couple.token == token)
     )
     if not couple:
         raise ValueError("пара с таким кодом не найдена")
 
     if couple.is_active:
         raise ValueError("к этой паре уже присоединились оба партнёра")
+
+    partner = next((u for u in couple.users if u.telegram_id != telegram_id), None)
+    if not partner:
+        raise ValueError("создатель пары не найден")
 
     new_user = User(telegram_id=telegram_id, couple=couple)
     session.add(new_user)
@@ -86,4 +94,4 @@ async def join_couple(session: AsyncSession, telegram_id: int, token: str) -> Co
     await session.commit()
     await session.refresh(couple)
 
-    return couple
+    return couple, partner.telegram_id

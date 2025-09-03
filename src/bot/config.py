@@ -1,6 +1,8 @@
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from aiogram import Bot
+
 class Settings(BaseSettings):
     bot_token_file: str = "/run/secrets/bot_token"
     postgres_password_file: str = "/run/secrets/postgres_password"
@@ -50,3 +52,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+bot = Bot(token=settings.bot_token) 

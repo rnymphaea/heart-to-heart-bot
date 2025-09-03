@@ -4,13 +4,12 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.methods import DeleteWebhook
 
-from src.bot.config import settings
+from src.bot.config import settings, bot
 from src.bot.handler import common, couple
 
 from src.bot.middleware.database import DataBaseSession
 from src.bot.storage.database import session_maker
 
-bot = Bot(token=settings.bot_token)
 dp = Dispatcher()
 
 logging.basicConfig(
