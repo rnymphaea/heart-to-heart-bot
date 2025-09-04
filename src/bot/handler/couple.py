@@ -11,7 +11,9 @@ from src.bot.keyboard.couple import leave_couple_keyboard
 import src.bot.storage.couple as database
 
 from src.bot.state import NewCouple, Couple
-from src.bot.handler.common import start_message
+
+from src.bot.message.common import start_message
+from src.bot.message.couple import select_option_message
 
 from src.bot.config import bot
 
@@ -97,9 +99,9 @@ async def process_join_token(message: Message, state: FSMContext, session: Async
             parse_mode=ParseMode.MARKDOWN,
         )
 
-        await state.set_state(Couple.select_category)
+        await state.set_state(Couple.select_option)
         partner_state = FSMContext(storage=state.storage, key=("default", str(partner_telegram_id)))
-        await partner_state.set_state(Couple.select_category)
+        await partner_state.set_state(Couple.select_option)
 
     except ValueError as e:
         await message.answer(

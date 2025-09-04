@@ -7,4 +7,4 @@ class NewCouple(StatesGroup):
 
 
 class Couple(StatesGroup):
-    select_category = State()
+    select_option = State()
