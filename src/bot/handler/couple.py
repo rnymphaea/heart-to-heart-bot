@@ -1,7 +1,6 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message, BufferedInputFile
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
 from aiogram.filters import StateFilter
 from aiogram.enums.parse_mode import ParseMode
 
@@ -11,20 +10,13 @@ from src.bot.keyboard.common import start_keyboard, cancel_keyboard
 from src.bot.keyboard.couple import leave_couple_keyboard
 import src.bot.storage.couple as database
 
+from src.bot.state import NewCouple, Couple
 from src.bot.handler.common import start_message
 
 from src.bot.config import bot
 
 couple_router = Router()
 
-
-class NewCouple(StatesGroup):
-    waiting = State()
-    joining = State()
-
-
-class Couple(StatesGroup):
-    select_category = State()
 
 @couple_router.callback_query(F.data == "create_couple")
 async def create_couple(callback: CallbackQuery, state: FSMContext, session: AsyncSession):

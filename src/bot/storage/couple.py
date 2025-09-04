@@ -14,7 +14,7 @@ async def create_couple(session: AsyncSession, telegram_id: int) -> Couple:
     existing_user = result.scalar_one_or_none()
 
     if existing_user:
-        raise ValueError("Пользователь уже состоит в паре")
+        raise ValueError("пользователь уже состоит в паре")
 
     token = uuid.uuid4().hex
     couple = Couple(token=token)
@@ -39,7 +39,7 @@ async def leave_couple(session: AsyncSession, telegram_id: int) -> None:
     user = result.scalar_one_or_none()
 
     if not user:
-        raise ValueError("Пользователь не найден")
+        raise ValueError("пользователь не найден")
 
     couple = user.couple
 
