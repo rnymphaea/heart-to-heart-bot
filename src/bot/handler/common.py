@@ -3,7 +3,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 
-for src.bot.message.common import start_message
+from src.bot.message.common import start_message
 from src.bot.keyboard.common import start_keyboard
 
 router = Router()

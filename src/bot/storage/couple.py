@@ -95,3 +95,18 @@ async def join_couple(session: AsyncSession, telegram_id: int, token: str) -> (C
     await session.refresh(couple)
 
     return couple, partner.telegram_id
+
+
+async def get_partner_telegram_id(session: AsyncSession, telegram_id: int) -> int:
+    user = await session.scalar(
+        select(User)
+        .options(selectinload(User.couple).selectinload(Couple.users))
+        .where(User.telegram_id == telegram_id)
+    )
+
+    if not user:
+        raise ValueError("ваш партнёр не найден")
+
+    for partner in user.couple.users:
+        if partner.telegram_id != telegram_id:
+            return partner.telegram_id

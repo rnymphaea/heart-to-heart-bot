@@ -8,3 +8,5 @@ class NewCouple(StatesGroup):
 
 class Couple(StatesGroup):
     select_option = State()
+    own_question = State()
+    answer = State()
