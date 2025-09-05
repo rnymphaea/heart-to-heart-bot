@@ -7,13 +7,13 @@ from aiogram.enums.parse_mode import ParseMode
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.bot.keyboard.common import start_keyboard, cancel_keyboard
-from src.bot.keyboard.couple import leave_couple_keyboard, select_option_keyboard, next_question_keyboard
+from src.bot.keyboard.couple import leave_couple_keyboard, select_option_keyboard, next_question_keyboard, category_keyboard
 import src.bot.storage.couple as database
 
 from src.bot.state import NewCouple, Couple
 
 from src.bot.message.common import start_message
-from src.bot.message.couple import select_option_message, own_question_message, next_question_message
+from src.bot.message.couple import select_option_message, own_question_message, next_question_message, select_category_message
 
 from src.bot.config import bot
 
@@ -236,3 +236,17 @@ async def next_question(callback: CallbackQuery, state: FSMContext, session: Asy
         await callback.message.answer(f"⚠️ Что-то пошло не так. Попробуйте ещё раз позже.")
 
 
+@couple_router.callback_query(F.data == "select_category")
+async def select_category(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(Couple.select_category)
+
+    kb = category_keyboard()
+    await callback.message.edit_text(text=select_category_message, reply_markup=kb)
+
+
+@couple_router.callback_query(
+    F.data.in_(["category_talk", "category_fun", "category_relationship", "category_goals", "category_reflection", "category_adult"])
+)
+async def process_select_category(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
+    category = callback.data
+    await callback.message.answer(text=f"Вы выбрали категорию: {category}")
