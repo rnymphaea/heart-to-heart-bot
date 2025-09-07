@@ -6,6 +6,7 @@ from aiogram import Bot
 class Settings(BaseSettings):
     bot_token_file: str = "/run/secrets/bot_token"
     postgres_password_file: str = "/run/secrets/postgres_password"
+    questions_file: str = "questions.toml"
 
     postgres_user: str = "postgres"
     postgres_db_name: str = "h2hdb"
@@ -48,7 +49,6 @@ class Settings(BaseSettings):
             f"{password}@{self.postgres_host}:"
             f"{self.postgres_port}/{self.postgres_db_name}"
         )
-
 
 
 settings = Settings()

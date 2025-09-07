@@ -15,7 +15,11 @@ from src.bot.state import NewCouple, Couple
 from src.bot.message.common import start_message
 from src.bot.message.couple import select_option_message, own_question_message, next_question_message, select_category_message
 
+from src.bot.question import get_question_from_category
+from src.bot.util.couple import CATEGORY_TRANSLATIONS
+
 from src.bot.config import bot
+
 
 couple_router = Router()
 
@@ -249,4 +253,37 @@ async def select_category(callback: CallbackQuery, state: FSMContext):
 )
 async def process_select_category(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
     category = callback.data
-    await callback.message.answer(text=f"Вы выбрали категорию: {category}")
+    try:
+        question = get_question_from_category(category)
+        partner_telegram_id = await database.get_partner_telegram_id(
+            session=session,
+            telegram_id=callback.from_user.id
+        )
+
+        kb = next_question_keyboard()
+        
+        category_name = CATEGORY_TRANSLATIONS[category]
+        
+        await callback.message.answer(
+            text=f"📚 Категория: *{category_name}*\n\n{question}",
+            reply_markup=kb,
+            parse_mode="Markdown"
+        )
+
+        await callback.message.bot.send_message(
+            chat_id=partner_telegram_id,
+            text=f"📚 Категория: *{category_name}*\n\n{question}",
+            reply_markup=kb,
+            parse_mode="Markdown"
+        )
+
+        await callback.message.delete()
+
+        await state.set_state(Couple.answer)
+        partner_state = FSMContext(storage=state.storage, key=("default", str(partner_telegram_id)))
+        await partner_state.set_state(Couple.answer)
+
+    except ValueError as e:
+        await callback.message.answer(f"❌ Ошибка: {e}")
+    except Exception as e:
+        await callback.message.answer(f"⚠️ Что-то пошло не так. Попробуйте снова позже.")       
