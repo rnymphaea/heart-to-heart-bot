@@ -164,6 +164,8 @@ async def own_question(callback: CallbackQuery, state: FSMContext):
 
 @couple_router.message(Couple.own_question)
 async def process_own_question(message: Message, state: FSMContext, session: AsyncSession):
+    func_name = "process_own_question"
+
     user_question = message.text.strip()
     kb = next_question_keyboard()
     try:
@@ -194,14 +196,18 @@ async def process_own_question(message: Message, state: FSMContext, session: Asy
         await partner_state.set_state(Couple.answer)
 
     except ValueError as e:
+        logger.warning(f"{func_name} - {e}")
         await message.answer(f"❌ Ошибка: {e}")
 
     except Exception as e:
+        logger.error(f"{func_name} - {e}")
         await message.answer(f"⚠️ Что-то пошло не так. Попробуйте ещё раз позже.")
 
 
 @couple_router.message(Couple.answer)
 async def process_answer(message: Message, state: FSMContext, session: AsyncSession):
+    func_name = "process_answer"
+
     answer = message.text.strip()
     try:
         partner_telegram_id = await database.get_partner_telegram_id(
@@ -214,11 +220,14 @@ async def process_answer(message: Message, state: FSMContext, session: AsyncSess
             text=answer,
         )
     except ValueError as e:
+        logger.warning(f"{func_name} - {e}")
         await message.answer(f"❌ Ошибка: {e}")
 
 
 @couple_router.callback_query(F.data == "next_question")
 async def next_question(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
+    func_name = "next_question"
+
     kb = select_option_keyboard()
     try:
         partner_telegram_id = await database.get_partner_telegram_id(
@@ -249,9 +258,11 @@ async def next_question(callback: CallbackQuery, state: FSMContext, session: Asy
 
         await callback.message.delete()
     except ValueError as e:
+        logger.warning(f"{func_name} - {e}")
         await callback.message.answer(f"❌ Ошибка: {e}")
 
     except Exception as e:
+        logger.error(f"{func_name} - {e}")
         await callback.message.answer(f"⚠️ Что-то пошло не так. Попробуйте ещё раз позже.")
 
 
@@ -324,6 +335,8 @@ async def process_select_category(callback: CallbackQuery, state: FSMContext, se
 
 @couple_router.callback_query(F.data == "random_question")
 async def random_question(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
+    func_name = "random_question"
+
     try:
         question = get_random_question()
         partner_telegram_id = await database.get_partner_telegram_id(session, callback.from_user.id)
@@ -353,6 +366,8 @@ async def random_question(callback: CallbackQuery, state: FSMContext, session: A
         await callback.message.delete()
 
     except ValueError as e:
+        logger.warning(f"{func_name} - {e}")
         await callback.message.answer(f"❌ Ошибка: {e}")
     except Exception as e:
+        logger.error(f"{func_name} - {e}")
         await callback.message.answer(f"⚠️ Что-то пошло не так. Попробуйте позже.")
