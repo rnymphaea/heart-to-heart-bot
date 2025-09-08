@@ -5,6 +5,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from aiogram import Bot
 
+from src.cache.local import LocalCache
+
 class Settings(BaseSettings):
     bot_token_file: str = "/run/secrets/bot_token"
     postgres_password_file: str = "/run/secrets/postgres_password"
@@ -65,3 +67,4 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+cache = LocalCache()

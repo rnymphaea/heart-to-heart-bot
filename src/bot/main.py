@@ -8,7 +8,7 @@ from src.bot.config import settings, bot, logger
 from src.bot.handler import common, couple
 
 from src.bot.middleware.database import DataBaseSession
-from src.bot.storage.database import session_maker
+from src.storage.database import session_maker
 
 dp = Dispatcher()
 

@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.bot.keyboard.common import start_keyboard, cancel_keyboard
 from src.bot.keyboard.couple import leave_couple_keyboard, select_option_keyboard, next_question_keyboard, category_keyboard
-import src.bot.storage.couple as database
+import src.storage.couple as database
 
 from src.bot.state import NewCouple, Couple
 
@@ -19,7 +19,7 @@ from src.bot.message.couple import select_option_message, own_question_message, 
 from src.bot.question import get_question_from_category, get_random_question
 from src.bot.util.couple import CATEGORY_TRANSLATIONS
 
-from src.bot.config import bot, logger
+from src.bot.config import bot, logger, cache
 
 
 couple_router = Router()
@@ -89,6 +89,8 @@ async def process_join_token(message: Message, state: FSMContext, session: Async
             telegram_id=message.from_user.id,
             token=token
         )
+
+        cache.set_partner(message.from_user.id, partner_telegram_id)
 
         await message.answer(
             f"🎉 Вы успешно присоединились к паре!\n\n"
@@ -169,10 +171,16 @@ async def process_own_question(message: Message, state: FSMContext, session: Asy
     user_question = message.text.strip()
     kb = next_question_keyboard()
     try:
-        partner_telegram_id = await database.get_partner_telegram_id(
-            session=session,
-            telegram_id=message.from_user.id
-        )
+        partner_telegram_id = cache.get_partner(message.from_user.id)
+        if not partner_telegram_id:
+            partner_telegram_id = await database.get_partner_telegram_id(
+                session=session,
+                telegram_id=message.from_user.id
+            )
+
+            cache.set_partner(callback.from_user.id, partner_telegram_id)
+        else:
+            logger.info(f"{func_name} - partner_telegram_id ({partner_telegram_id}) retrieved from cache")
 
         await message.bot.send_message(
             chat_id=partner_telegram_id,
@@ -210,10 +218,16 @@ async def process_answer(message: Message, state: FSMContext, session: AsyncSess
 
     answer = message.text.strip()
     try:
-        partner_telegram_id = await database.get_partner_telegram_id(
-            session=session,
-            telegram_id=message.from_user.id
-        )
+        partner_telegram_id = cache.get_partner(message.from_user.id)
+        if not partner_telegram_id:
+            partner_telegram_id = await database.get_partner_telegram_id(
+                session=session,
+                telegram_id=message.from_user.id
+            )
+
+            cache.set_partner(callback.from_user.id, partner_telegram_id)
+        else:
+            logger.info(f"{func_name} - partner_telegram_id({partner_telegram_id}) retrieved from cache")
 
         await message.bot.send_message(
             chat_id=partner_telegram_id,
@@ -230,10 +244,16 @@ async def next_question(callback: CallbackQuery, state: FSMContext, session: Asy
 
     kb = select_option_keyboard()
     try:
-        partner_telegram_id = await database.get_partner_telegram_id(
-            session=session,
-            telegram_id=callback.from_user.id
-        )
+        partner_telegram_id = cache.get_partner(callback.from_user.id)
+        if not partner_telegram_id:
+            partner_telegram_id = await database.get_partner_telegram_id(
+                session=session,
+                telegram_id=callback.from_user.id
+            )
+
+            cache.set_partner(callback.from_user.id, partner_telegram_id)
+        else:
+            logger.info(f"{func_name} - partner_telegram_id({partner_telegram_id}) retrieved from cache")
 
         await callback.bot.send_message(
             chat_id=partner_telegram_id,
@@ -256,7 +276,7 @@ async def next_question(callback: CallbackQuery, state: FSMContext, session: Asy
         partner_state = FSMContext(storage=state.storage, key=partner_key)
         await partner_state.set_state(Couple.select_option)
 
-        await callback.message.delete()
+        await callback.message.edit_reply_markup(reply_markup=None)
     except ValueError as e:
         logger.warning(f"{func_name} - {e}")
         await callback.message.answer(f"❌ Ошибка: {e}")
@@ -283,10 +303,17 @@ async def process_select_category(callback: CallbackQuery, state: FSMContext, se
     category = callback.data
     try:
         question = get_question_from_category(category)
-        partner_telegram_id = await database.get_partner_telegram_id(
-            session=session,
-            telegram_id=callback.from_user.id
-        )
+
+        partner_telegram_id = cache.get_partner(callback.from_user.id)
+        if not partner_telegram_id:
+            partner_telegram_id = await database.get_partner_telegram_id(
+                session=session,
+                telegram_id=callback.from_user.id
+            )
+
+            cache.set_partner(callback.from_user.id, partner_telegram_id)
+        else:
+            logger.info(f"{func_name} - partner_telegram_id({partner_telegram_id}) retrieved from cache")
 
         kb = next_question_keyboard()
         
@@ -339,7 +366,12 @@ async def random_question(callback: CallbackQuery, state: FSMContext, session: A
 
     try:
         question = get_random_question()
-        partner_telegram_id = await database.get_partner_telegram_id(session, callback.from_user.id)
+        partner_telegram_id = cache.get_partner(callback.from_user.id)
+        if not partner_telegram_id:
+            partner_telegram_id = await database.get_partner_telegram_id(session, callback.from_user.id)
+            cache.set_partner(callback.from_user.id, partner_telegram_id)
+        else:
+            logger.info(f"{func_name} - partner_telegram_id({partner_telegram_id}) retrieved from cache")
 
         kb = next_question_keyboard()
 

@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload
 
-from src.bot.storage.model import Couple, User
+from src.storage.model import Couple, User
 
 
 async def create_couple(session: AsyncSession, telegram_id: int) -> Couple:
