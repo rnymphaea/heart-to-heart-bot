@@ -15,7 +15,7 @@ from src.bot.state import NewCouple, Couple
 from src.bot.message.common import start_message
 from src.bot.message.couple import select_option_message, own_question_message, next_question_message, select_category_message
 
-from src.bot.question import get_question_from_category
+from src.bot.question import get_question_from_category, get_random_question
 from src.bot.util.couple import CATEGORY_TRANSLATIONS
 
 from src.bot.config import bot
@@ -232,7 +232,7 @@ async def next_question(callback: CallbackQuery, state: FSMContext, session: Asy
         partner_state = FSMContext(storage=state.storage, key=("default", str(partner_telegram_id)))
         await partner_state.set_state(Couple.select_option)
 
-        await callback.answer()
+        await callback.message.delete()
     except ValueError as e:
         await callback.message.answer(f"❌ Ошибка: {e}")
 
@@ -286,4 +286,34 @@ async def process_select_category(callback: CallbackQuery, state: FSMContext, se
     except ValueError as e:
         await callback.message.answer(f"❌ Ошибка: {e}")
     except Exception as e:
-        await callback.message.answer(f"⚠️ Что-то пошло не так. Попробуйте снова позже.")       
+        await callback.message.answer(f"⚠️ Что-то пошло не так. Попробуйте снова позже.")
+
+
+@couple_router.callback_query(F.data == "random_question")
+async def random_question(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
+    try:
+        question = get_random_question()
+        partner_telegram_id = await database.get_partner_telegram_id(session, callback.from_user.id)
+
+        kb = next_question_keyboard()
+
+        await callback.message.answer(
+            text=f"🎲 Случайный вопрос:\n\n{question}",
+            reply_markup=kb
+        )
+        await callback.bot.send_message(
+            chat_id=partner_telegram_id,
+            text=f"🎲 Случайный вопрос:\n\n{question}",
+            reply_markup=kb
+        )
+
+        await state.set_state(Couple.answer)
+        partner_state = FSMContext(storage=state.storage, key=("default", str(partner_telegram_id)))
+        await partner_state.set_state(Couple.answer)
+
+        await callback.message.delete()
+
+    except ValueError as e:
+        await callback.message.answer(f"❌ Ошибка: {e}")
+    except Exception as e:
+        await callback.message.answer(f"⚠️ Что-то пошло не так. Попробуйте позже.")
