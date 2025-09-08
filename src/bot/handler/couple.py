@@ -3,6 +3,7 @@ from aiogram.types import CallbackQuery, Message, BufferedInputFile
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import StateFilter
 from aiogram.enums.parse_mode import ParseMode
+from aiogram.fsm.storage.base import StorageKey
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,7 +19,7 @@ from src.bot.message.couple import select_option_message, own_question_message, 
 from src.bot.question import get_question_from_category, get_random_question
 from src.bot.util.couple import CATEGORY_TRANSLATIONS
 
-from src.bot.config import bot
+from src.bot.config import bot, logger
 
 
 couple_router = Router()
@@ -106,7 +107,12 @@ async def process_join_token(message: Message, state: FSMContext, session: Async
         await bot.send_message(chat_id=partner_telegram_id, text=select_option_message, reply_markup=kb)
 
         await state.set_state(Couple.select_option)
-        partner_state = FSMContext(storage=state.storage, key=("default", str(partner_telegram_id)))
+        partner_key = StorageKey(
+            bot_id=callback.bot.id,
+            chat_id=partner_telegram_id,
+            user_id=partner_telegram_id
+        )
+        partner_state = FSMContext(storage=state.storage, key=partner_key)
         await partner_state.set_state(Couple.select_option)
 
     except ValueError as e:
@@ -179,9 +185,13 @@ async def process_own_question(message: Message, state: FSMContext, session: Asy
 
         await state.set_state(Couple.answer)
 
-        partner_state = FSMContext(storage=state.storage, key=("default", str(partner_telegram_id)))
+        partner_key = StorageKey(
+            bot_id=callback.bot.id,
+            chat_id=partner_telegram_id,
+            user_id=partner_telegram_id
+        )
+        partner_state = FSMContext(storage=state.storage, key=partner_key)
         await partner_state.set_state(Couple.answer)
-
 
     except ValueError as e:
         await message.answer(f"❌ Ошибка: {e}")
@@ -229,7 +239,12 @@ async def next_question(callback: CallbackQuery, state: FSMContext, session: Asy
 
         await state.set_state(Couple.select_option)
 
-        partner_state = FSMContext(storage=state.storage, key=("default", str(partner_telegram_id)))
+        partner_key = StorageKey(
+            bot_id=callback.bot.id,
+            chat_id=partner_telegram_id,
+            user_id=partner_telegram_id
+        )
+        partner_state = FSMContext(storage=state.storage, key=partner_key)
         await partner_state.set_state(Couple.select_option)
 
         await callback.message.delete()
@@ -252,6 +267,8 @@ async def select_category(callback: CallbackQuery, state: FSMContext):
     F.data.in_(["category_talk", "category_fun", "category_relationship", "category_goals", "category_reflection", "category_adult"])
 )
 async def process_select_category(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
+    func_name = "process_select_category"
+
     category = callback.data
     try:
         question = get_question_from_category(category)
@@ -280,12 +297,28 @@ async def process_select_category(callback: CallbackQuery, state: FSMContext, se
         await callback.message.delete()
 
         await state.set_state(Couple.answer)
-        partner_state = FSMContext(storage=state.storage, key=("default", str(partner_telegram_id)))
+
+        partner_key = StorageKey(
+            bot_id=callback.bot.id,
+            chat_id=partner_telegram_id,
+            user_id=partner_telegram_id
+        )
+        partner_state = FSMContext(storage=state.storage, key=partner_key)
         await partner_state.set_state(Couple.answer)
+        
+        first_partner_state = await state.get_state()
+        logger.info(f"{func_name} - 1st partner_telegram_id: {callback.from_user.id}, state: {first_partner_state}")
+
+        key = StorageKey(bot_id=callback.message.bot.id, chat_id=partner_telegram_id, user_id=partner_telegram_id)
+        partner_state = await state.storage.get_state(key)
+        second_partner_state = await state.get_state()
+        logger.info(f"{func_name} - 2nd partner_telegram_id: {partner_telegram_id}, state: {second_partner_state}")
 
     except ValueError as e:
+        logger.warning(f"{func_name} - {e}")
         await callback.message.answer(f"❌ Ошибка: {e}")
     except Exception as e:
+        logger.error(f"{func_name} - {e}")
         await callback.message.answer(f"⚠️ Что-то пошло не так. Попробуйте снова позже.")
 
 
@@ -308,7 +341,13 @@ async def random_question(callback: CallbackQuery, state: FSMContext, session: A
         )
 
         await state.set_state(Couple.answer)
-        partner_state = FSMContext(storage=state.storage, key=("default", str(partner_telegram_id)))
+        
+        partner_key = StorageKey(
+            bot_id=callback.bot.id,
+            chat_id=partner_telegram_id,
+            user_id=partner_telegram_id
+        )
+        partner_state = FSMContext(storage=state.storage, key=partner_key)
         await partner_state.set_state(Couple.answer)
 
         await callback.message.delete()

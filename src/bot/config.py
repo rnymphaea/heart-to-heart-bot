@@ -1,3 +1,5 @@
+import logging
+
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -53,3 +55,13 @@ class Settings(BaseSettings):
 
 settings = Settings()
 bot = Bot(token=settings.bot_token) 
+
+logging.basicConfig(
+   level=logging.INFO,
+   format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+   handlers=[
+       logging.StreamHandler(),
+   ]
+)
+
+logger = logging.getLogger(__name__)
