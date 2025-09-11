@@ -178,7 +178,7 @@ async def process_own_question(message: Message, state: FSMContext, session: Asy
                 telegram_id=message.from_user.id
             )
 
-            cache.set_partner(callback.from_user.id, partner_telegram_id)
+            cache.set_partner(message.from_user.id, partner_telegram_id)
         else:
             logger.info(f"{func_name} - partner_telegram_id ({partner_telegram_id}) retrieved from cache")
 
@@ -196,7 +196,7 @@ async def process_own_question(message: Message, state: FSMContext, session: Asy
         await state.set_state(Couple.answer)
 
         partner_key = StorageKey(
-            bot_id=callback.bot.id,
+            bot_id=message.bot.id,
             chat_id=partner_telegram_id,
             user_id=partner_telegram_id
         )
@@ -216,7 +216,6 @@ async def process_own_question(message: Message, state: FSMContext, session: Asy
 async def process_answer(message: Message, state: FSMContext, session: AsyncSession):
     func_name = "process_answer"
 
-    answer = message.text.strip()
     try:
         partner_telegram_id = cache.get_partner(message.from_user.id)
         if not partner_telegram_id:
@@ -229,10 +228,7 @@ async def process_answer(message: Message, state: FSMContext, session: AsyncSess
         else:
             logger.info(f"{func_name} - partner_telegram_id({partner_telegram_id}) retrieved from cache")
 
-        await message.bot.send_message(
-            chat_id=partner_telegram_id,
-            text=answer,
-        )
+        await message.copy_to(chat_id=partner_telegram_id)
     except ValueError as e:
         logger.warning(f"{func_name} - {e}")
         await message.answer(f"❌ Ошибка: {e}")
